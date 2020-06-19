@@ -109,17 +109,22 @@ module.exports = function (RED) {
                     });
                     break;
                 case 'put':
-                    var d = new Date();
-                    var guid = d.getTime().toString();
+                    var newFile = '';
+                    if (msg.payload.filename) {
+                        newFile = node.workdir + msg.payload.filename;
+                    } else if (node.filename == "") {
+                        var d = new Date();
+                        var guid = d.getTime().toString();
 
-                    if (node.fileExtension == "") {
-                        node.fileExtension = ".txt";
+                        if (node.fileExtension == "") {
+                            node.fileExtension = ".txt";
+                        }
+                        newFile = node.workdir + guid + node.fileExtension;
+                    } else {
+                        newFile = node.workdir + node.filename;
                     }
-                    var newFile = node.workdir + guid + node.fileExtension;
-                    var msgData = '';
-                    if (msg.payload.filename)
-                        newFile = msg.payload.filename;
 
+                    var msgData = '';
                     if (msg.payload.filedata)
                         msgData = msg.payload.filedata;
                     else

@@ -142,12 +142,19 @@ module.exports = function (RED) {
                     });
                     break;
                 case 'delete':
-                    console.log("[http://www.hardingpoint.com] FTP Delete:" + msg.payload.filename);
+                    var delFile = '';
+                    if (msg.payload.filename)
+                        delFile = msg.payload.filename;
+                    else
+                        delFile = node.workdir + node.filename;
+                    console.log("[http://www.hardingpoint.com] FTP Delete:" + delFile);
                     var Ftp = new JSFtp(node.ftpConfig.options);
-                    Ftp.raw("dele", msg.payload.filename, function(err, data) {
+                    Ftp.raw("dele", delFile, function(err, data) {
                         if (err) node.error(err);
                         else{
                             node.status({});
+                            msg.payload = {};
+                            msg.payload.filename = delFile;
                             node.send(msg);
                         }
                     });

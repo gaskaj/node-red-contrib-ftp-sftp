@@ -132,26 +132,21 @@
     oneditprepare: function () {
       var savedir = $(".input-savedir-row");
       var filename = $(".input-filename-row");
-      var localFilename = $(".input-localFilename-row");
       $("#node-input-operation").change(function () {
         var id = $("#node-input-operation option:selected").val();
         console.log(id);
         if (id == 'list') {
           filename.hide();
           savedir.hide();
-          localFilename.hide();
         } else if (id == 'put') {
           filename.show();
           savedir.hide();
-          localFilename.hide();
         } else if (id =='get') {
           filename.show();
           savedir.show();
-          localFilename.hide();
         } else {
           filename.show();
           savedir.hide();
-          localFilename.hide();
         }
       });
     }

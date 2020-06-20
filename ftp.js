@@ -111,7 +111,7 @@ module.exports = function (RED) {
                 case 'put':
                     var newFile = '';
                     if (msg.payload.filename) {
-                        newFile = node.workdir + msg.payload.filename;
+                        newFile = msg.payload.filename;
                     } else if (node.filename == "") {
                         var d = new Date();
                         var guid = d.getTime().toString();

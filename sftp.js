@@ -166,8 +166,8 @@ module.exports = function (RED) {
                           }).on('end', function() {
                               node.status({});
                               conn.end();
-                              msg.payload.filedata = "";
                               console.log("Read Chunks " + counter + " Length: " + buf.length);
+                              msg.payload = {};
                               msg.payload.filedata = buf;
                               msg.payload.filename = ftpfilename;
                               node.send(msg);
@@ -198,6 +198,7 @@ module.exports = function (RED) {
                           writeStream.write(msgData, function(err, result){
                               node.status({});
                               conn.end();
+                              msg.payload = {};
                               msg.payload.filename = newFile;
                               node.send(msg);
                           });

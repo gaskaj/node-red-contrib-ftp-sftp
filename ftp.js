@@ -88,7 +88,7 @@ module.exports = function (RED) {
                     console.log("[http://www.hardingpoint.com] FTP Get:" + ftpfilename);
                     Ftp.get(ftpfilename, function(err, socket){
                         if (err) {
-                            node.error(err);
+                            node.error(err, msg);
                         }else{
                             socket.on("data", function(d){
                                 str += d.toString();
@@ -96,7 +96,7 @@ module.exports = function (RED) {
 
                             socket.on("close", function(err) {
                                 if (err)
-                                    node.error(err);
+                                    node.error(err, msg);
 
                                 node.status({});
                                 msg.payload = {};
@@ -133,9 +133,10 @@ module.exports = function (RED) {
 
                     Ftp.put(buffer, newFile, function(err){
                         if (err)
-                            node.error(err);
+                            node.error(err, msg);
                         else{
                             node.status({});
+                            msg.payload = {};
                             msg.payload.filename = newFile;
                             node.send(msg);
                         }
@@ -150,7 +151,7 @@ module.exports = function (RED) {
                     console.log("[http://www.hardingpoint.com] FTP Delete:" + delFile);
                     var Ftp = new JSFtp(node.ftpConfig.options);
                     Ftp.raw("dele", delFile, function(err, data) {
-                        if (err) node.error(err);
+                        if (err) node.error(err, msg);
                         else{
                             node.status({});
                             msg.payload = {};
@@ -163,7 +164,7 @@ module.exports = function (RED) {
 
       } catch (error) {
           console.log("Caught Error:" + error);
-         node.error(error);
+         node.error(error, msg);
       }
     });
     } else {

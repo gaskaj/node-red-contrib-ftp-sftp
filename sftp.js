@@ -125,7 +125,7 @@ module.exports = function (RED) {
 
           this.sendMsg = function (err, result) {
               if (err) {
-                  node.error(err.toString());
+                  node.error(err.toString(), msg);
                   node.status({ fill: 'red', shape: 'ring', text: 'failed' });
               }
               node.status({});
@@ -138,13 +138,13 @@ module.exports = function (RED) {
               switch (node.operation) {
                   case 'list':
                       conn.sftp(function (err, sftp) {
-                          if (err) node.error(err);
+                          if (err) node.error(err, msg);
                           sftp.readdir(node.workdir, node.sendMsg);
                       });
                       break;
                   case 'get':
                       conn.sftp(function(err, sftp) {
-                          if (err) node.error(err);
+                          if (err) node.error(err, msg);
                           var ftpfilename = node.workdir + node.filename;
 
                           if (msg.payload.filename)
@@ -166,8 +166,8 @@ module.exports = function (RED) {
                           }).on('end', function() {
                               node.status({});
                               conn.end();
-                              msg.payload.filedata = "";
                               console.log("Read Chunks " + counter + " Length: " + buf.length);
+                              msg.payload = {};
                               msg.payload.filedata = buf;
                               msg.payload.filename = ftpfilename;
                               node.send(msg);
@@ -176,7 +176,7 @@ module.exports = function (RED) {
                       break;
                   case 'put':
                       conn.sftp(function (err, sftp) {
-                          if (err) node.error(err);
+                          if (err) node.error(err, msg);
                           var d = new Date();
                           var guid = d.getTime().toString();
                           if (node.fileExtension == "") {
@@ -198,6 +198,7 @@ module.exports = function (RED) {
                           writeStream.write(msgData, function(err, result){
                               node.status({});
                               conn.end();
+                              msg.payload = {};
                               msg.payload.filename = newFile;
                               node.send(msg);
                           });
@@ -205,14 +206,14 @@ module.exports = function (RED) {
                       break;
                   case 'delete':
                       conn.sftp(function (err, sftp) {
-                      if (err) node.error(err);
+                      if (err) node.error(err, msg);
                           var ftpfilename = node.workdir + node.filename;
                           if (msg.payload.filename)
                               ftpfilename = msg.payload.filename;
                           console.log("Deleting File: " + ftpfilename);
                           sftp.unlink(ftpfilename, function (err) {
                               if (err) {
-                                  node.error(err);
+                                  node.error(err, msg);
                               } else {
                                   console.log("file unlinked");
                                   node.status({});
@@ -225,7 +226,7 @@ module.exports = function (RED) {
               }
           });
           conn.on('error', function(error) {
-            node.error(error);
+            node.error(error, msg);
           });
           conn.connect(node.sftpConfig.options);
 

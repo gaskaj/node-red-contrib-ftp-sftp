@@ -217,6 +217,8 @@ module.exports = function (RED) {
                               } else {
                                   console.log("file unlinked");
                                   node.status({});
+                                  msg.payload = {};
+                                  msg.payload.filename = ftpfilename;
                                   node.send(msg);
                               }
                               conn.end();

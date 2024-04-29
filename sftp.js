@@ -105,7 +105,7 @@ module.exports = function (RED) {
 
     if (this.sftpConfig) {
       var node = this;
-      node.on('input', function (msg) {
+      node.on('input', function (msg, send, done) {
         try {
 
           node.workdir = node.workdir || msg.workdir || "./";
@@ -121,41 +121,36 @@ module.exports = function (RED) {
 
           this.sendMsg = function (err, result) {
               if (err) {
-                  node.error(err.toString(), msg);
-                  node.status({ fill: 'red', shape: 'ring', text: 'failed' });
+                  done(err);
               }
               node.status({});
               conn.end();
               msg.payload = result;
-              node.send(msg);
+              send(msg);
+              done();
           };
 
           conn.on('ready', function () {
               switch (node.operation) {
                   case 'list':
                       conn.sftp(function (err, sftp) {
-                          if (err)
-                              node.error(err, msg);
+                          if (err) done(err);
                           sftp.readdir(node.workdir, node.sendMsg);
                       });
                       break;
                   case 'get':
                       conn.sftp(function(err, sftp) {
-                          if (err)
-                              node.error(err, msg);
+                          if (err) done(err);
                           var ftpfilename = node.workdir + node.filename;
 
                           if (msg.payload.filename)
                               ftpfilename = msg.payload.filename;
-
-                          var bufferarray = [];
 
                           // Be very careful bufferSize too large causes issues with multi threading
                           var stream = sftp.createReadStream(ftpfilename,{ highWaterMark: 1024, bufferSize: 1024 });
 
                           var counter = 0;
                           var buf = '';
-                          var byteSize = 65536;
 
                           stream.on('data', function(d) {
                               buf += d;
@@ -168,14 +163,15 @@ module.exports = function (RED) {
                               msg.payload = {};
                               msg.payload.filedata = buf;
                               msg.payload.filename = ftpfilename;
-                              node.send(msg);
+                              send(msg);
+                              done();
                           });
                       });
                       break;
                   case 'put':
                       conn.sftp(function (err, sftp) {
-                          if (err)
-                              node.error(err, msg);
+                          if (err) done(err);
+
                           var newFile = '';
                           if (msg.payload.filename) {
                               newFile = msg.payload.filename;
@@ -197,34 +193,34 @@ module.exports = function (RED) {
 
                           console.log("[http://www.hardingpoint.com] SFTP Put:" + newFile);
                           var writeStream = sftp.createWriteStream(newFile, {flags: 'w'});
-                          // var payloadBuff = new Buffer(msgData);
-                          // writeStream.write(payloadBuff, node.sendMsg);
                           writeStream.write(msgData, function(err, result){
                               node.status({});
                               conn.end();
                               msg.payload = {};
                               msg.payload.filename = newFile;
-                              node.send(msg);
+                              send(msg);
+                              done();
                           });
                       });
                       break;
                   case 'delete':
                       conn.sftp(function (err, sftp) {
-                          if (err)
-                              node.error(err, msg);
+                          if (err) done(err);
+
                           var ftpfilename = node.workdir + node.filename;
                           if (msg.payload.filename)
                               ftpfilename = msg.payload.filename;
                           console.log("SFTP Deleting File: " + ftpfilename);
                           sftp.unlink(ftpfilename, function (err) {
                               if (err) {
-                                  node.error(err, msg);
+                                  done(err);
                               } else {
                                   console.log("SFTP file unlinked");
                                   node.status({});
                                   msg.payload = {};
                                   msg.payload.filename = ftpfilename;
-                                  node.send(msg);
+                                  send(msg);
+                                  done();
                               }
                               conn.end();
                           });
@@ -233,12 +229,12 @@ module.exports = function (RED) {
               }
           });
           conn.on('error', function(error) {
-              node.error(error, msg);
+              done(error);
           });
           conn.connect(node.sftpConfig.options);
 
       } catch (error) {
-          node.error(error, msg);
+        done(error);
       }
     });
     } else {
